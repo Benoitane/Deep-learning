@@ -9,17 +9,17 @@ from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, Learnin
 
 class Classifier_RESNET:
 
-    def __init__(self, output_directory, input_shape, nb_classes, n_feature_maps=64,kernel_size=5,verbose=False, build=True):
+    def __init__(self, output_directory, input_shape, nb_classes, Early_Stopping, reduce_lr, n_feature_maps=64,kernel_size=5  ,verbose=False, build=True):
         self.output_directory = output_directory
         if build == True:
-            self.model = self.build_model(input_shape, nb_classes,n_feature_maps,kernel_size)
+            self.model = self.build_model(input_shape, nb_classes,Early_Stopping,reduce_lr,n_feature_maps,kernel_size)
             if (verbose == True):
                 self.model.summary()
             self.verbose = verbose
             self.model.save_weights(self.output_directory + 'model_init.resnet')
         return
 
-    def build_model(self, input_shape, nb_classes,n_feature_maps=64,kernel_size=5):
+    def build_model(self, input_shape, nb_classes,Early_Stopping,reduce_lr,n_feature_maps=64,kernel_size=5):
 
         loss = 'categorical_crossentropy'
         n_units_dense = nb_classes
@@ -93,14 +93,14 @@ class Classifier_RESNET:
         gap_layer = keras.layers.GlobalAveragePooling1D()(output_block_3)
         output_layer = keras.layers.Dense(n_units_dense, activation='softmax')(gap_layer)
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
-        model.compile(loss=loss, optimizer=keras.optimizers.Adam(),metrics=['accuracy'])
-        earlystopper = EarlyStopping(patience=4, verbose=1)
-        reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.5, patience=4, min_lr=0.0001)
+        model.compile(loss=loss, optimizer=keras.optimizers.Adam(lr = 0.001, beta_1 = 0.9, beta_2 = 0.999),metrics=['accuracy'])
+        earlystopper = Early_Stopping 
+        reducelr = reduce_lr
 		
         file_path = self.output_directory + 'best_model.resnet'
         model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='loss', save_best_only=True)
 		
-        self.callbacks = [reduce_lr, earlystopper, model_checkpoint]
+        self.callbacks = [earlystopper, reducelr, model_checkpoint]
 
         return model
 

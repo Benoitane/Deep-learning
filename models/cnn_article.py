@@ -24,17 +24,17 @@ def exp_decay(epoch):
 
 class CNN_simple:
 
-    def __init__(self,output_directory, input_shape, nb_classes, n_feature_maps=64,kernel_size=5,verbose=False, build=True):
+    def __init__(self,output_directory, input_shape, nb_classes, Early_Stopping, reduce_lr, n_feature_maps=64,kernel_size=5,verbose=False, build=True):
         self.output_directory = output_directory
         if build == True:
-            self.model = self.build_model(input_shape, nb_classes,n_feature_maps,kernel_size)
+            self.model = self.build_model(input_shape, nb_classes, Early_Stopping, reduce_lr,n_feature_maps,kernel_size)
             if (verbose == True):
                 self.model.summary()
             self.verbose = verbose
             self.model.save_weights(self.output_directory + 'model_init.art')
         return
 
-    def build_model(self, input_shape, nb_classes,n_feature_maps=64,kernel_size=5):
+    def build_model(self, input_shape, nb_classes, Early_Stopping, reduce_lr, n_feature_maps=64, kernel_size=5):
 
         loss = 'categorical_crossentropy'
         n_units_dense = nb_classes
@@ -98,8 +98,8 @@ class CNN_simple:
         model = keras.models.Model(inputs=input_layer, outputs=A7)
 
         model.compile(loss=loss, optimizer = keras.optimizers.Adam(lr = 0.001, beta_1 = 0.9, beta_2 = 0.999),metrics=['accuracy'])
-        lrate = LearningRateScheduler(exp_decay)
-        earlystopper = EarlyStopping(patience=4, verbose=1)
+        lrate = reduce_lr
+        earlystopper = Early_Stopping
         file_path = self.output_directory + 'best_model.art'
         model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='loss', save_best_only=True)
 		

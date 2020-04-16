@@ -51,9 +51,9 @@ def split_dataset(data,labels,data_test,labels_test,val_prop, Deep, modele):
             xval = xval.reshape(xval.shape[0],xval.shape[1],1)
             xtest = xtest.reshape(xtest.shape[0],xtest.shape[1],1)
         if modele == 'RNN':
-            xtrain = pad_sequences(xtrain, maxlen=250)
-            xval = pad_sequences(xval, maxlen=250)
-            xtest = pad_sequences(xtest, maxlen=250)
+            xtrain = pad_sequences(xtrain, maxlen=200)
+            xval = pad_sequences(xval, maxlen=200)
+            xtest = pad_sequences(xtest, maxlen=200)
         if modele == 'NTK':
             nb_train = 10000
             nb_test = 9000
