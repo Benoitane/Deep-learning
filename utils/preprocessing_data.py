@@ -25,26 +25,49 @@ from sklearn.preprocessing import LabelEncoder
 from keras.utils import to_categorical
 from sklearn.model_selection import StratifiedShuffleSplit
 from keras.preprocessing.sequence import pad_sequences
+from scipy.sparse import vstack
 
-def split_dataset(data,labels,data_test,labels_test,val_prop, Deep, modele):
+def split_dataset(data, labels, Deep, modele, validation=True , val_prop = 0.2):
     """
-
+    splits dataset into (train,test) or (train,validation,test)
+    arguments
+    ---------
+    data: features (X), array-like
+    labels : classes (y), array-like
+    validation: bool, if True split in (train,validation,test) with proportion (0.6,0.2,0.2)
+                      if False split in (train,test) with proportion (0.8,0.2)
+    returns
+    -------
+    xtrain,xtest,(xval): splitted versions of data
+    ytrain,ytest,(yval): splitted versions of labels as one hot encoding if more than 2 classes
+    y_test_true,(y_val_true): not one hot encoded versions of labels
     """
     labels = np.array(labels,dtype=int)
     data = np.array(data)
-    ytest = np.array(labels_test,dtype=int)
-    xtest = np.array(data_test)
-    val_proportion = val_prop
 
+    if validation:
+        val_proportion = val_prop*2
+    else:
+        val_proportion = val_prop
+    
     sss = StratifiedShuffleSplit(n_splits=1, test_size=val_proportion, random_state=0)
-
-    for train_index,val_index  in sss.split(data,labels):
-        xtrain,xval = data[train_index],data[val_index]
-        ytrain,yval = labels[train_index],labels[val_index]
-
+    for train_index,test_index  in sss.split(data,labels):
+        xtrain,xtest = data[train_index],data[test_index]
+        ytrain,ytest = labels[train_index],labels[test_index]
+    
+     
+    if validation:
+        sss = StratifiedShuffleSplit(n_splits=1, test_size=0.5, random_state=0)
+        for val_index,test_index in sss.split(xtest,ytest):
+            xval,xtest = xtest[val_index],xtest[test_index]
+            yval,ytest = ytest[val_index],ytest[test_index]
+    y_val_true = yval
+    y_test_true = ytest
     if Deep == True:
         ytrain = to_categorical(ytrain, 5)
+        y_val_true = yval
         yval = to_categorical(yval, 5)
+        y_test_true = ytest
         ytest = to_categorical(ytest, 5)
         if modele == 'CNN':
             xtrain = xtrain.reshape(xtrain.shape[0],xtrain.shape[1],1)
@@ -56,20 +79,29 @@ def split_dataset(data,labels,data_test,labels_test,val_prop, Deep, modele):
             xtest = pad_sequences(xtest, maxlen=200)
         if modele == 'NTK':
             nb_train = 10000
-            nb_test = 9000
+            nb_test = 10000
             xtrain = jax.numpy.array(xtrain[:nb_train,:])
             xval = jax.numpy.array(xval[:nb_test,:])
             xtest = jax.numpy.array(xtest[:nb_test,:])
             ytrain = jax.numpy.array(ytrain[:nb_train,:].astype(int))
             yval = jax.numpy.array(yval[:nb_test,:].astype(int))
             ytest = jax.numpy.array(ytest[:nb_test,:].astype(int))
-			
-    return xtrain,ytrain,xval,yval,xtest,ytest
+            y_val_true = y_val_true[:nb_test]
+
+    if validation:
+        return xtrain,ytrain,xval,yval,y_val_true,xtest,ytest,y_test_true
+    else:
+        return xtrain,ytrain,xtest,ytest,y_test_true
+
   
-def read_dataset(path):
-    data = pd.read_csv(path,header=None)
+def read_dataset(path_1,path_2):
+    data1 = pd.read_csv(path_1,header=None)
+    data2 = pd.read_csv(path_2,header=None)
+    data = pd.concat([data1, data2], ignore_index=True)
+
     labels = data[187].astype(int)
     data.drop(187,axis=1,inplace=True)
     data = data.values
     labels = labels.values
+	
     return data,labels
