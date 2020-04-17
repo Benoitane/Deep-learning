@@ -120,7 +120,7 @@ def visualize_mitbih(X,y):
     fig = plt.figure(figsize=(14,5))
     for c in set(y):
         spe_ecg = X[y==c][0]
-        plt.plot(spe_ecg,label='example of label '+str(c))
+        plt.plot(spe_ecg,label='exemple de signal pour la classe '+str(c))
 
     plt.legend()
     plt.show()
