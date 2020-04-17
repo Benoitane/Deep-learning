@@ -1,2 +1,2 @@
-model_checkpoint_path: "model_init.art"
-all_model_checkpoint_paths: "model_init.art"
+model_checkpoint_path: "model_init.mlp"
+all_model_checkpoint_paths: "model_init.mlp"
